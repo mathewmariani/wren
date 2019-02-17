@@ -171,7 +171,7 @@ ObjFiber* wrenNewFiber(WrenVM* vm, ObjClosure* closure)
   fiber->openUpvalues = NULL;
   fiber->caller = NULL;
   fiber->error = NULL_VAL;
-  fiber->callerIsTrying = false;
+  fiber->state = FIBER_OTHER;
   
   if (closure != NULL)
   {
@@ -519,6 +519,8 @@ static bool findEntry(MapEntry* entries, uint32_t capacity, Value key,
 static bool insertEntry(MapEntry* entries, uint32_t capacity,
                         Value key, Value value)
 {
+  ASSERT(entries != NULL, "Should ensure capacity before inserting.");
+  
   MapEntry* entry;
   if (findEntry(entries, capacity, key, &entry))
   {
@@ -528,7 +530,6 @@ static bool insertEntry(MapEntry* entries, uint32_t capacity,
   }
   else
   {
-    ASSERT(entry != NULL, "Should ensure capacity before inserting.");
     entry->key = key;
     entry->value = value;
     return true;
@@ -1008,7 +1009,7 @@ static void blackenClass(WrenVM* vm, ObjClass* classObj)
   {
     if (classObj->methods.data[i].type == METHOD_BLOCK)
     {
-      wrenGrayObj(vm, (Obj*)classObj->methods.data[i].fn.obj);
+      wrenGrayObj(vm, (Obj*)classObj->methods.data[i].as.closure);
     }
   }
 
